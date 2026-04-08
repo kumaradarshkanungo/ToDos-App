@@ -30,6 +30,7 @@ let currentMonth = today.getMonth() + 1;
 let currentYear  = today.getFullYear();
 let todos        = [];
 let completions  = [];
+let lastModified = 0;  // unix-ms; used to decide local vs. remote on refresh
 
 // ── Sync timer ────────────────────────────────────────────
 let syncTimer  = null;
@@ -42,12 +43,13 @@ const SYNC_DELAY = 1500; // ms debounce before pushing to Gist
 function loadLocal() {
   try {
     const raw = localStorage.getItem(DATA_KEY);
-    if (raw) { const d = JSON.parse(raw); todos = d.todos || []; completions = d.completions || []; }
+    if (raw) { const d = JSON.parse(raw); todos = d.todos || []; completions = d.completions || []; lastModified = d.lastModified || 0; }
   } catch { /* start fresh */ }
 }
 
 function saveLocal() {
-  localStorage.setItem(DATA_KEY, JSON.stringify({ todos, completions }));
+  lastModified = Date.now();
+  localStorage.setItem(DATA_KEY, JSON.stringify({ todos, completions, lastModified }));
 }
 
 function loadAuth() {
@@ -127,9 +129,18 @@ async function ghLoadFromGist(token, id) {
     : file.content;
 
   const data = JSON.parse(content);
-  todos       = data.todos       || [];
-  completions = data.completions || [];
-  saveLocal();
+  const remoteLastModified = data.lastModified || 0;
+
+  if (remoteLastModified >= lastModified) {
+    // Remote is newer (or equal on first connect) — pull from Gist
+    todos        = data.todos       || [];
+    completions  = data.completions || [];
+    lastModified = remoteLastModified;
+    saveLocal();
+  } else {
+    // Local is newer (e.g. user edited then refreshed before sync fired) — push to Gist
+    await ghSaveToGist();
+  }
 }
 
 /** Push current state to Gist (debounced by callers). */
@@ -141,7 +152,7 @@ async function ghSaveToGist() {
       method: 'PATCH',
       headers: ghHeaders(authToken),
       body: JSON.stringify({
-        files: { [GIST_FILE]: { content: JSON.stringify({ todos, completions }, null, 2) } }
+        files: { [GIST_FILE]: { content: JSON.stringify({ todos, completions, lastModified }, null, 2) } }
       })
     });
     if (!res.ok) throw new Error(`Sync failed: ${res.status}`);
