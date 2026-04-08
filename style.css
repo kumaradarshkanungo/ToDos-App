@@ -1,5 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Ensure the `hidden` attribute always wins over any display: flex/block rules */
+[hidden] { display: none !important; }
+
 :root {
   --primary:            #6650A4;
   --primary-hover:      #7965af;
