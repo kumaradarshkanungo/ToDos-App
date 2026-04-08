@@ -4,7 +4,7 @@
    Storage: GitHub Gist (JSON file) for cross-device sync
             Falls back to localStorage-only in offline mode
    Data model:
-     todos[]       – { id, title, description, dueDate, month, year,
+     todos[]       – { id, title, description, dueDate, category, month, year,
                        isRecurring, isCompleted, createdAt }
      completions[] – { todoId, month, year }  (recurring only)
 ───────────────────────────────────────────────────────── */
@@ -194,6 +194,9 @@ function escape(str) { const d = document.createElement('div'); d.textContent = 
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+// Maps category value → CSS class suffix
+const CAT_CLASS = { Personal: 'personal', EMIs: 'emi', House: 'house', Office: 'office', Miscellaneous: 'miscellaneous' };
+
 // ── Due date helpers ──────────────────────────────────────
 
 /**
@@ -265,18 +268,19 @@ function getTodosForMonth(month, year) {
     .sort((a, b) => urgencyOrder(a) - urgencyOrder(b) || a.createdAt - b.createdAt);
 }
 
-function addTodo(title, description, dueDate, isRecurring) {
-  todos.push({ id: uid(), title, description, dueDate: dueDate || null, isCompleted: false, month: currentMonth, year: currentYear, isRecurring, createdAt: Date.now() });
+function addTodo(title, description, dueDate, isRecurring, category) {
+  todos.push({ id: uid(), title, description, dueDate: dueDate || null, category: category || 'Personal', isCompleted: false, month: currentMonth, year: currentYear, isRecurring, createdAt: Date.now() });
   save(); render();
 }
 
-function updateTodo(id, title, description, dueDate, isRecurring) {
+function updateTodo(id, title, description, dueDate, isRecurring, category) {
   const t = todos.find(item => item.id === id);
   if (!t) return;
   t.title       = title;
   t.description = description;
   t.dueDate     = dueDate || null;
   t.isRecurring = isRecurring;
+  t.category    = category || 'Personal';
   save(); render();
 }
 
@@ -345,6 +349,7 @@ function render() {
       <div class="todo-content">
         <div class="todo-title-row">
           <span class="todo-title">${escape(t.title)}</span>
+          <span class="badge-cat cat-${CAT_CLASS[t.category] || 'personal'}">${escape(t.category || 'Personal')}</span>
           ${t.isRecurring ? '<span class="badge-recurring">Recurring</span>' : ''}
         </div>
         ${t.description ? `<p class="todo-desc">${escape(t.description)}</p>` : ''}
@@ -570,11 +575,13 @@ function openModal(existing = null)  {
     descInput.value    = existing.description || '';
     dueDateInput.value = existing.dueDate || '';
     recurInput.checked = existing.isRecurring;
-    modalTitle.textContent  = 'Edit Item';
+    document.querySelectorAll('input[name="category"]').forEach(r => { r.checked = r.value === (existing.category || 'Personal'); });
+    modalTitle.textContent  = 'Edit ToDo';
     submitBtn.textContent   = 'Save Changes';
     submitBtn.disabled      = false;
   } else {
-    modalTitle.textContent = 'New Item';
+    document.querySelectorAll('input[name="category"]').forEach(r => { r.checked = r.value === 'Personal'; });
+    modalTitle.textContent = 'New ToDo';
     submitBtn.textContent  = 'Add';
     submitBtn.disabled     = true;
   }
@@ -594,16 +601,17 @@ todoForm.addEventListener('submit', e => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) { titleInput.classList.add('invalid'); titleError.classList.add('visible'); titleInput.focus(); return; }
-  const dueDate = dueDateInput.value || null;
+  const dueDate  = dueDateInput.value || null;
+  const category = document.querySelector('input[name="category"]:checked')?.value || 'Personal';
   if (editingId) {
-    updateTodo(editingId, title, descInput.value.trim(), dueDate, recurInput.checked);
+    updateTodo(editingId, title, descInput.value.trim(), dueDate, recurInput.checked, category);
   } else {
-    addTodo(title, descInput.value.trim(), dueDate, recurInput.checked);
+    addTodo(title, descInput.value.trim(), dueDate, recurInput.checked, category);
   }
   closeModal();
 });
 
-document.getElementById('addBtn').addEventListener('click', openModal);
+document.getElementById('addBtn').addEventListener('click', () => openModal());
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && modalOverlay.classList.contains('open')) closeModal(); });

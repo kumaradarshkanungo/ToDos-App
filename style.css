@@ -690,6 +690,7 @@ body {
   margin-top: 1px;   /* align knob baseline with first text line */
   position: relative;
   transition: background .2s;
+  display: inline-block;
 }
 .toggle-switch::after {
   content: '';
@@ -706,9 +707,63 @@ body {
 .toggle-label:has(input:checked) .toggle-switch        { background: var(--primary); }
 .toggle-label:has(input:checked) .toggle-switch::after { transform: translateX(20px); }
 
-.toggle-text { display: flex; flex-direction: column; gap: 3px; }
-.toggle-title { font-size: 15px; font-weight: 500; color: var(--on-surface); }
+.toggle-text { display: inline-block; vertical-align: top; margin-top: 6px;}
+.toggle-title { font-size: 15px; font-weight: 500; color: var(--on-surface); text-transform: none; }
 .toggle-desc  { font-size: 12px; color: var(--on-surface-var); }
+
+/* ── Category chips ──────────────────────────────────── */
+.form-fieldset { border: none; padding: 0; margin: 0; margin-bottom: 1rem; }
+
+.form-legend {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--on-surface-var);
+  margin-bottom: 7px;
+}
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-label { cursor: pointer; }
+.chip-label input[type="radio"] { display: none; }
+
+.chip-label span {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1.5px solid var(--outline);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--on-surface-var);
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+.chip-label:has(input:checked) span {
+  border-color: var(--primary);
+  background: var(--primary-container);
+  color: var(--primary);
+}
+
+/* ── Category badge on cards ─────────────────────────── */
+.badge-cat {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+  letter-spacing: .3px;
+}
+.badge-cat.cat-personal      { background: #EDE7F6; color: #4527A0; }
+.badge-cat.cat-emi           { background: #FCE4EC; color: #880E4F; }
+.badge-cat.cat-house         { background: #E8F5E9; color: #1B5E20; }
+.badge-cat.cat-office        { background: #E3F2FD; color: #0D47A1; }
+.badge-cat.cat-miscellaneous { background: #ECEFF1; color: #37474F; }
 
 /* ── Modal actions ───────────────────────────────── */
 .modal-actions { display: flex; gap: 10px; margin-top: 8px; }

@@ -156,6 +156,17 @@
             <textarea id="descInput" placeholder="Add details…" rows="3"></textarea>
           </div>
 
+          <fieldset class="form-group form-fieldset">
+            <legend class="form-legend">Category</legend>
+            <div class="category-chips">
+              <label class="chip-label"><input type="radio" name="category" value="Personal" checked /><span>Personal</span></label>
+              <label class="chip-label"><input type="radio" name="category" value="EMIs" /><span>EMIs</span></label>
+              <label class="chip-label"><input type="radio" name="category" value="House" /><span>House</span></label>
+              <label class="chip-label"><input type="radio" name="category" value="Office" /><span>Office</span></label>
+              <label class="chip-label"><input type="radio" name="category" value="Miscellaneous" /><span>Misc</span></label>
+            </div>
+          </fieldset>
+
           <div class="form-group">
             <label for="dueDateInput">Due Date <span class="optional">(optional)</span></label>
             <input type="date" id="dueDateInput" />
@@ -167,7 +178,6 @@
               <span class="toggle-switch"></span>
               <span class="toggle-text">
                 <span class="toggle-title">Recurring monthly</span>
-                <span class="toggle-desc">Appears in every month going forward</span>
               </span>
             </label>
           </div>
