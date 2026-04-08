@@ -7,11 +7,98 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
+
+  <!-- ══════════════════════════════════════════════
+       LOGIN SCREEN
+  ══════════════════════════════════════════════ -->
+  <div id="loginScreen" class="login-screen" hidden>
+    <div class="login-card">
+
+      <div class="login-logo">
+        <svg width="36" height="36" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="10" y="8" width="44" height="50" rx="4"/>
+          <line x1="20" y1="22" x2="44" y2="22"/>
+          <line x1="20" y1="32" x2="44" y2="32"/>
+          <line x1="20" y1="42" x2="34" y2="42"/>
+          <polyline points="38 40 42 44 50 36"/>
+        </svg>
+      </div>
+      <h1 class="login-title">ToDos</h1>
+      <p class="login-subtitle">Sync your todos across devices using a free GitHub account — no database, no backend.</p>
+
+      <!-- Steps -->
+      <div class="steps-card">
+        <p class="steps-heading">How to get your token</p>
+        <ol class="steps-list">
+          <li>Open the link below and sign in to GitHub</li>
+          <li>Set <strong>Note</strong> to anything (e.g. "ToDos App")</li>
+          <li>Set <strong>Expiration</strong> to <em>No expiration</em></li>
+          <li>Under <strong>Select scopes</strong> check only <code>gist</code></li>
+          <li>Click <strong>Generate token</strong> and copy it</li>
+        </ol>
+        <a
+          class="gh-link"
+          href="https://github.com/settings/tokens/new?scopes=gist&description=ToDos+App"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.21.09 1.85 1.24 1.85 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 013-.4c1.02.005 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          github.com/settings/tokens/new
+        </a>
+      </div>
+
+      <!-- Token input -->
+      <div class="token-group">
+        <label for="tokenInput">Personal Access Token</label>
+        <div class="token-input-wrap">
+          <input
+            type="password"
+            id="tokenInput"
+            placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button type="button" class="token-reveal" id="tokenReveal" aria-label="Show token">
+            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <span class="token-error" id="tokenError"></span>
+      </div>
+
+      <button class="btn btn-primary btn-connect" id="connectBtn" disabled>
+        <span id="connectLabel">Connect to GitHub</span>
+        <span id="connectSpinner" class="spinner" hidden></span>
+      </button>
+
+      <button class="btn-offline" id="offlineBtn">Continue without syncing →</button>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       MAIN APP
+  ══════════════════════════════════════════════ -->
+  <div id="appScreen" class="app" hidden>
 
     <!-- Header -->
     <header class="header">
-      <span class="app-title">ToDos</span>
+      <div class="header-row">
+        <span class="app-title">ToDos</span>
+
+        <!-- GitHub user pill (shown when synced) -->
+        <div class="user-pill" id="userPill" hidden>
+          <span class="sync-dot" id="syncDot" title=""></span>
+          <img class="user-avatar" id="userAvatar" alt="" width="22" height="22" />
+          <span class="user-name" id="userName"></span>
+          <button class="signout-btn" id="signoutBtn" title="Sign out">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+
+        <!-- Offline badge (shown in offline mode) -->
+        <span class="offline-badge" id="offlineBadge" hidden>Local only</span>
+      </div>
+
       <div class="month-nav">
         <button class="nav-btn" id="prevMonth" aria-label="Previous month">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -26,16 +113,13 @@
     <!-- Main -->
     <main class="main">
 
-      <!-- Progress -->
       <div class="progress-section" id="progressSection">
         <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
         <span class="progress-text" id="progressText"></span>
       </div>
 
-      <!-- List -->
       <div class="todo-list" id="todoList"></div>
 
-      <!-- Empty state -->
       <div class="empty-state" id="emptyState">
         <svg class="empty-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="10" y="8" width="44" height="50" rx="4"/>
@@ -94,6 +178,6 @@
 
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
