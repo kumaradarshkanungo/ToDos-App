@@ -586,6 +586,7 @@ body {
 .optional { font-weight: 400; text-transform: none; letter-spacing: 0; }
 
 .form-group input[type="text"],
+.form-group input[type="date"],
 .form-group textarea {
   width: 100%;
   padding: 12px 14px;
@@ -600,6 +601,7 @@ body {
   transition: border-color var(--transition);
 }
 .form-group input[type="text"]:focus,
+.form-group input[type="date"]:focus,
 .form-group textarea:focus { border-color: var(--primary); }
 .form-group input[type="text"].invalid { border-color: var(--error); }
 
@@ -610,6 +612,28 @@ body {
   margin-top: 4px;
 }
 .field-error.visible { display: block; }
+
+/* ── Due date — card borders ─────────────────────────────── */
+.todo-card.overdue   { border-left: 3px solid #B3261E; }
+.todo-card.due-today { border-left: 3px solid #D84315; }
+.todo-card.due-soon  { border-left: 3px solid #F59E0B; }
+.todo-card.on-track  { border-left: 3px solid #2E7D32; }
+
+/* ── Due date chip ───────────────────────────────────────── */
+.badge-due {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+  letter-spacing: .3px;
+  margin-top: 5px;
+}
+.badge-due.overdue   { background: #FDECEA; color: #B3261E; }
+.badge-due.due-today { background: #FBE9E7; color: #92400E; }
+.badge-due.due-soon  { background: #FFF8E1; color: #B45309; }
+.badge-due.on-track  { background: #E8F5E9; color: #2E7D32; }
 
 /* ── Toggle ──────────────────────────────────────── */
 .toggle-label {

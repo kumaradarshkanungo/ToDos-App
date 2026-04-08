@@ -4,7 +4,7 @@
    Storage: GitHub Gist (JSON file) for cross-device sync
             Falls back to localStorage-only in offline mode
    Data model:
-     todos[]       – { id, title, description, month, year,
+     todos[]       – { id, title, description, dueDate, month, year,
                        isRecurring, isCompleted, createdAt }
      completions[] – { todoId, month, year }  (recurring only)
 ───────────────────────────────────────────────────────── */
@@ -194,6 +194,45 @@ function escape(str) { const d = document.createElement('div'); d.textContent = 
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+// ── Due date helpers ──────────────────────────────────────
+
+/**
+ * Returns 'overdue' | 'due-today' | 'due-soon' | 'on-track' | null.
+ * null means no due date or already completed.
+ */
+function getDueStatus(dueDate, isCompleted) {
+  if (!dueDate || isCompleted) return null;
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const due  = new Date(dueDate + 'T00:00:00');
+  const diff = Math.ceil((due - now) / 86400000);
+  if (diff <  0) return 'overdue';
+  if (diff === 0) return 'due-today';
+  if (diff <= 3) return 'due-soon';
+  return 'on-track';
+}
+
+/** Human-readable label for the due date chip. */
+function formatDueChip(dueDate, status) {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const due  = new Date(dueDate + 'T00:00:00');
+  const diff = Math.ceil((due - now) / 86400000);
+  const label = due.toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric',
+    ...(due.getFullYear() !== now.getFullYear() && { year: 'numeric' })
+  });
+  if (diff === 0) return 'Due today';
+  if (diff === 1) return 'Due tomorrow';
+  if (status === 'overdue') return `Overdue · ${label}`;
+  return `Due ${label}`;
+}
+
+/** Sort priority so urgent items float to the top. */
+function urgencyOrder(item) {
+  if (item.isCompletedThisMonth) return 5;
+  const rank = { overdue: 0, 'due-today': 1, 'due-soon': 2, 'on-track': 3 };
+  return rank[getDueStatus(item.dueDate, false)] ?? 4;
+}
+
 // ═══════════════════════════════════════════════════════════
 // BUSINESS LOGIC
 // ═══════════════════════════════════════════════════════════
@@ -203,11 +242,12 @@ function getTodosForMonth(month, year) {
   const recurring = todos.filter(t => t.isRecurring && (t.year < year || (t.year === year && t.month <= month)));
   const doneSet   = new Set(completions.filter(c => c.month === month && c.year === year).map(c => c.todoId));
   const decorate  = t => ({ ...t, isCompletedThisMonth: t.isRecurring ? doneSet.has(t.id) : t.isCompleted });
-  return [...oneOff.map(decorate), ...recurring.map(decorate)].sort((a, b) => a.createdAt - b.createdAt);
+  return [...oneOff.map(decorate), ...recurring.map(decorate)]
+    .sort((a, b) => urgencyOrder(a) - urgencyOrder(b) || a.createdAt - b.createdAt);
 }
 
-function addTodo(title, description, isRecurring) {
-  todos.push({ id: uid(), title, description, isCompleted: false, month: currentMonth, year: currentYear, isRecurring, createdAt: Date.now() });
+function addTodo(title, description, dueDate, isRecurring) {
+  todos.push({ id: uid(), title, description, dueDate: dueDate || null, isCompleted: false, month: currentMonth, year: currentYear, isRecurring, createdAt: Date.now() });
   save(); render();
 }
 
@@ -262,8 +302,14 @@ function render() {
     emptyState.classList.remove('visible');
   }
 
-  document.getElementById('todoList').innerHTML = items.map(t => `
-    <div class="todo-card${t.isCompletedThisMonth ? ' completed' : ''}">
+  document.getElementById('todoList').innerHTML = items.map(t => {
+    const status   = getDueStatus(t.dueDate, t.isCompletedThisMonth);
+    const cardCls  = ['todo-card', t.isCompletedThisMonth ? 'completed' : '', status ?? ''].filter(Boolean).join(' ');
+    const dueChip  = t.dueDate && !t.isCompletedThisMonth
+      ? `<span class="badge-due ${status}">${formatDueChip(t.dueDate, status)}</span>`
+      : '';
+    return `
+    <div class="${cardCls}">
       <div class="checkbox-wrap">
         <input type="checkbox" ${t.isCompletedThisMonth ? 'checked' : ''} data-id="${t.id}" data-recurring="${t.isRecurring}" aria-label="Mark complete" />
       </div>
@@ -273,6 +319,7 @@ function render() {
           ${t.isRecurring ? '<span class="badge-recurring">Recurring</span>' : ''}
         </div>
         ${t.description ? `<p class="todo-desc">${escape(t.description)}</p>` : ''}
+        ${dueChip}
       </div>
       <div class="todo-actions">
         <button class="delete-btn" data-delete="${t.id}" data-recurring="${t.isRecurring}" aria-label="Delete todo">
@@ -284,8 +331,8 @@ function render() {
           </svg>
         </button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -469,6 +516,7 @@ const modalOverlay = document.getElementById('modalOverlay');
 const todoForm     = document.getElementById('todoForm');
 const titleInput   = document.getElementById('titleInput');
 const descInput    = document.getElementById('descInput');
+const dueDateInput = document.getElementById('dueDateInput');
 const recurInput   = document.getElementById('recurringInput');
 const submitBtn    = document.getElementById('submitBtn');
 const titleError   = document.getElementById('titleError');
@@ -493,7 +541,7 @@ todoForm.addEventListener('submit', e => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) { titleInput.classList.add('invalid'); titleError.classList.add('visible'); titleInput.focus(); return; }
-  addTodo(title, descInput.value.trim(), recurInput.checked);
+  addTodo(title, descInput.value.trim(), dueDateInput.value || null, recurInput.checked);
   closeModal();
 });
 
