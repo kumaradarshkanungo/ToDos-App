@@ -1,0 +1,433 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary:            #6650A4;
+  --primary-hover:      #7965af;
+  --primary-container:  #EADDFF;
+  --on-primary:         #FFFFFF;
+  --on-primary-cont:    #21005D;
+  --tertiary-container: #FFD8E4;
+  --on-tertiary-cont:   #31111D;
+  --surface:            #FAFAFA;
+  --surface-variant:    #E7E0EC;
+  --on-surface:         #1C1B1F;
+  --on-surface-var:     #49454F;
+  --outline:            #CAC4D0;
+  --error:              #B3261E;
+  --card-bg:            #FFFFFF;
+  --radius:             14px;
+  --radius-sm:          10px;
+  --shadow-sm:          0 1px 4px rgba(0,0,0,.10);
+  --shadow-md:          0 4px 18px rgba(0,0,0,.13);
+  --transition:         .18s ease;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--surface);
+  color: var(--on-surface);
+  min-height: 100dvh;
+}
+
+/* ── App shell ─────────────────────────────────── */
+.app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: 96px;
+}
+
+/* ── Header ─────────────────────────────────────── */
+.header {
+  background: var(--primary-container);
+  padding: 18px 16px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: var(--shadow-sm);
+}
+
+.app-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-primary-cont);
+  transition: background var(--transition);
+}
+.nav-btn:hover  { background: rgba(0,0,0,.08); }
+.nav-btn:active { background: rgba(0,0,0,.14); }
+
+.month-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--on-primary-cont);
+  letter-spacing: -.3px;
+}
+
+/* ── Main ────────────────────────────────────────── */
+.main { padding: 20px 16px; }
+
+/* ── Progress ────────────────────────────────────── */
+.progress-section {
+  display: none;
+  margin-bottom: 20px;
+}
+.progress-section.visible { display: block; }
+
+.progress-track {
+  height: 8px;
+  background: var(--surface-variant);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 100px;
+  transition: width .35s ease;
+}
+.progress-text {
+  font-size: 12px;
+  color: var(--on-surface-var);
+}
+
+/* ── Todo list ───────────────────────────────────── */
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Todo card ───────────────────────────────────── */
+.todo-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: flex-start;
+  padding: 14px 12px;
+  gap: 10px;
+  transition: opacity var(--transition), transform var(--transition);
+  animation: slideIn .2s ease;
+}
+.todo-card.completed { opacity: .55; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Checkbox */
+.checkbox-wrap { flex-shrink: 0; padding-top: 2px; }
+.checkbox-wrap input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+/* Content */
+.todo-content { flex: 1; min-width: 0; }
+
+.todo-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.todo-title {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  word-break: break-word;
+  transition: color var(--transition), text-decoration var(--transition);
+}
+.todo-card.completed .todo-title {
+  text-decoration: line-through;
+  color: var(--on-surface-var);
+}
+
+.badge-recurring {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--tertiary-container);
+  color: var(--on-tertiary-cont);
+  padding: 2px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+  letter-spacing: .3px;
+}
+
+.todo-desc {
+  font-size: 13px;
+  color: var(--on-surface-var);
+  margin-top: 4px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.todo-card.completed .todo-desc { text-decoration: line-through; }
+
+/* Delete button */
+.todo-actions { flex-shrink: 0; }
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--error);
+  opacity: .4;
+  transition: opacity var(--transition), background var(--transition);
+}
+.delete-btn:hover  { opacity: 1; background: rgba(179,38,30,.08); }
+
+/* ── Empty state ─────────────────────────────────── */
+.empty-state {
+  display: none;
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--on-surface-var);
+}
+.empty-state.visible { display: block; }
+
+.empty-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 18px;
+  color: var(--primary);
+  opacity: .2;
+}
+.empty-title { font-size: 15px; font-weight: 500; }
+.empty-hint  { font-size: 13px; opacity: .55; margin-top: 6px; }
+
+/* ── FAB ─────────────────────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  transition: background var(--transition), transform .15s;
+  z-index: 50;
+}
+.fab:hover  { background: var(--primary-hover); transform: scale(1.05); }
+.fab:active { transform: scale(.96); }
+
+/* ── Modal overlay ───────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: var(--card-bg);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 20px 36px;
+  width: 100%;
+  max-width: 600px;
+  transform: translateY(28px);
+  transition: transform .25s ease;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 22px;
+}
+
+/* ── Form ────────────────────────────────────────── */
+.form-group { margin-bottom: 16px; }
+
+.form-group > label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--on-surface-var);
+  margin-bottom: 7px;
+}
+.optional { font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--outline);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--on-surface);
+  background: white;
+  outline: none;
+  resize: none;
+  transition: border-color var(--transition);
+}
+.form-group input[type="text"]:focus,
+.form-group textarea:focus { border-color: var(--primary); }
+.form-group input[type="text"].invalid { border-color: var(--error); }
+
+.field-error {
+  display: none;
+  font-size: 12px;
+  color: var(--error);
+  margin-top: 4px;
+}
+.field-error.visible { display: block; }
+
+/* ── Toggle ──────────────────────────────────────── */
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--outline);
+  transition: border-color var(--transition), background var(--transition);
+}
+.toggle-label:has(input:checked) {
+  border-color: var(--primary);
+  background: rgba(102,80,164,.04);
+}
+.toggle-label input[type="checkbox"] { display: none; }
+
+.toggle-switch {
+  width: 46px;
+  height: 26px;
+  background: #CAC4D0;
+  border-radius: 100px;
+  flex-shrink: 0;
+  position: relative;
+  transition: background .2s;
+}
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  top: 3px;
+  left: 3px;
+  transition: transform .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.22);
+}
+.toggle-label:has(input:checked) .toggle-switch          { background: var(--primary); }
+.toggle-label:has(input:checked) .toggle-switch::after   { transform: translateX(20px); }
+
+.toggle-text { display: flex; flex-direction: column; gap: 3px; }
+.toggle-title { font-size: 15px; font-weight: 500; color: var(--on-surface); }
+.toggle-desc  { font-size: 12px; color: var(--on-surface-var); }
+
+/* ── Modal actions ───────────────────────────────── */
+.modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+
+.btn {
+  flex: 1;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition), opacity var(--transition);
+}
+.btn-secondary {
+  background: var(--surface-variant);
+  color: var(--on-surface);
+}
+.btn-secondary:hover { background: #d8d0e0; }
+.btn-primary  {
+  flex: 2;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.btn-primary:hover   { background: var(--primary-hover); }
+.btn-primary:disabled {
+  background: var(--surface-variant);
+  color: var(--on-surface-var);
+  cursor: not-allowed;
+}
+
+/* ── Confirm dialog ──────────────────────────────── */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn .18s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.confirm-dialog {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 320px;
+  width: calc(100% - 40px);
+  box-shadow: var(--shadow-md);
+  animation: scaleIn .18s ease;
+}
+@keyframes scaleIn { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.confirm-dialog h3 { font-size: 16px; margin-bottom: 8px; }
+.confirm-dialog p  { font-size: 14px; color: var(--on-surface-var); line-height: 1.5; margin-bottom: 22px; }
+
+.confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.confirm-actions .btn { flex: none; padding: 9px 20px; }
+.btn-confirm-cancel { background: var(--surface-variant); color: var(--on-surface); }
+.btn-confirm-delete { background: var(--error); color: white; }
+.btn-confirm-delete:hover { background: #c9302c; }
