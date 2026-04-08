@@ -5,9 +5,12 @@ A clean, minimal web app to manage your todos on a **monthly basis** — no back
 ## Features
 
 - **Monthly view** — navigate between any month with `‹ ›` arrows
-- **Add todos** — title, optional description, and a recurring toggle
+- **Add todos** — title, category, optional description, optional due date, and a recurring toggle
 - **Check off** — checkbox per item with strike-through styling and a live progress bar
+- **Categories** — tag each todo with a category: Personal, EMIs, House, Office, or Miscellaneous; each has a distinct colour badge
 - **Recurring todos** — toggle to make a todo repeat every month going forward; each month tracks its own checked state independently
+- **Due dates** — optional per-todo due date with colour-coded urgency borders and chips (overdue / due today / due soon / on track); recurring items auto-project the due day to the viewed month
+- **Edit** — pencil button on each card opens the modal pre-filled for in-place editing
 - **Delete with confirmation** — trash button warns if the todo is recurring (deletes from all months)
 - **GitHub sync** — sign in with a GitHub Personal Access Token to store todos in a private Gist and access them from any device
 - **Offline mode** — skip sign-in and use `localStorage` only; data persists across refreshes in the same browser
