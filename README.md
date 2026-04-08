@@ -7,9 +7,9 @@ A clean, minimal web app to manage your todos on a **monthly basis** — no back
 - **Monthly view** — navigate between any month with `‹ ›` arrows
 - **Add todos** — title, category, optional description, optional due date, and a recurring toggle
 - **Check off** — checkbox per item with strike-through styling and a live progress bar
-- **Categories** — tag each todo with a category: Personal, EMIs, House, Office, or Miscellaneous; each has a distinct colour badge
+- **Categories** — tag each todo with a category: Personal, EMIs, House, Office, or Miscellaneous; each has a distinct color badge
 - **Recurring todos** — toggle to make a todo repeat every month going forward; each month tracks its own checked state independently
-- **Due dates** — optional per-todo due date with colour-coded urgency borders and chips (overdue / due today / due soon / on track); recurring items auto-project the due day to the viewed month
+- **Due dates** — optional per-todo due date with color-coded urgency borders and chips (overdue / due today / due soon / on track); recurring items auto-project the due day to the viewed month
 - **Edit** — pencil button on each card opens the modal pre-filled for in-place editing
 - **Delete with confirmation** — trash button warns if the todo is recurring (deletes from all months)
 - **GitHub sync** — sign in with a GitHub Personal Access Token to store todos in a private Gist and access them from any device
@@ -58,7 +58,7 @@ Changes are saved to `localStorage` immediately and pushed to the Gist after a *
 | Local is newer (e.g. refreshed before sync fired) | Push local data to Gist |
 | Both equal (first connect or no changes) | No action |
 
-A colour-coded dot in the header shows sync state: **yellow** = syncing, **green** = synced, **red** = error.
+A color-coded dot in the header shows sync state: **yellow** = syncing, **green** = synced, **red** = error.
 
 ## Data Model
 
@@ -66,7 +66,7 @@ A colour-coded dot in the header shows sync state: **yellow** = syncing, **green
 
 | Array | Fields | Purpose |
 |---|---|---|
-| `todos` | `id, title, description, month, year, isRecurring, isCompleted, createdAt` | All todos |
+| `todos` | `id, title, description, dueDate, category, month, year, isRecurring, isCompleted, createdAt` | All todos |
 | `completions` | `todoId, month, year` | Per-month completion state for recurring todos |
 | `lastModified` | unix timestamp (ms) | Used to resolve local vs. remote conflicts on refresh |
 
