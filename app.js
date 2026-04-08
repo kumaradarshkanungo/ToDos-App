@@ -197,6 +197,21 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 // ── Due date helpers ──────────────────────────────────────
 
 /**
+ * For recurring items the due date is relative to the viewed month —
+ * e.g. a "due on the 15th" recurring entry shows Apr 15 in April.
+ * Day is clamped to the last day of the target month.
+ */
+function getEffectiveDueDate(todo, viewMonth, viewYear) {
+  if (!todo.dueDate) return null;
+  if (!todo.isRecurring) return todo.dueDate;
+  const orig    = new Date(todo.dueDate + 'T00:00:00');
+  const day     = orig.getDate();
+  const lastDay = new Date(viewYear, viewMonth, 0).getDate(); // day 0 = last day of prev month trick
+  const clamped = Math.min(day, lastDay);
+  return `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(clamped).padStart(2, '0')}`;
+}
+
+/**
  * Returns 'overdue' | 'due-today' | 'due-soon' | 'on-track' | null.
  * null means no due date or already completed.
  */
@@ -230,7 +245,7 @@ function formatDueChip(dueDate, status) {
 function urgencyOrder(item) {
   if (item.isCompletedThisMonth) return 5;
   const rank = { overdue: 0, 'due-today': 1, 'due-soon': 2, 'on-track': 3 };
-  return rank[getDueStatus(item.dueDate, false)] ?? 4;
+  return rank[getDueStatus(item.effectiveDueDate, false)] ?? 4;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -241,13 +256,27 @@ function getTodosForMonth(month, year) {
   const oneOff    = todos.filter(t => !t.isRecurring && t.month === month && t.year === year);
   const recurring = todos.filter(t => t.isRecurring && (t.year < year || (t.year === year && t.month <= month)));
   const doneSet   = new Set(completions.filter(c => c.month === month && c.year === year).map(c => c.todoId));
-  const decorate  = t => ({ ...t, isCompletedThisMonth: t.isRecurring ? doneSet.has(t.id) : t.isCompleted });
+  const decorate  = t => ({
+    ...t,
+    isCompletedThisMonth: t.isRecurring ? doneSet.has(t.id) : t.isCompleted,
+    effectiveDueDate: getEffectiveDueDate(t, month, year)
+  });
   return [...oneOff.map(decorate), ...recurring.map(decorate)]
     .sort((a, b) => urgencyOrder(a) - urgencyOrder(b) || a.createdAt - b.createdAt);
 }
 
 function addTodo(title, description, dueDate, isRecurring) {
   todos.push({ id: uid(), title, description, dueDate: dueDate || null, isCompleted: false, month: currentMonth, year: currentYear, isRecurring, createdAt: Date.now() });
+  save(); render();
+}
+
+function updateTodo(id, title, description, dueDate, isRecurring) {
+  const t = todos.find(item => item.id === id);
+  if (!t) return;
+  t.title       = title;
+  t.description = description;
+  t.dueDate     = dueDate || null;
+  t.isRecurring = isRecurring;
   save(); render();
 }
 
@@ -303,10 +332,10 @@ function render() {
   }
 
   document.getElementById('todoList').innerHTML = items.map(t => {
-    const status   = getDueStatus(t.dueDate, t.isCompletedThisMonth);
+    const status   = getDueStatus(t.effectiveDueDate, t.isCompletedThisMonth);
     const cardCls  = ['todo-card', t.isCompletedThisMonth ? 'completed' : '', status ?? ''].filter(Boolean).join(' ');
-    const dueChip  = t.dueDate && !t.isCompletedThisMonth
-      ? `<span class="badge-due ${status}">${formatDueChip(t.dueDate, status)}</span>`
+    const dueChip  = t.effectiveDueDate && !t.isCompletedThisMonth
+      ? `<span class="badge-due ${status}">${formatDueChip(t.effectiveDueDate, status)}</span>`
       : '';
     return `
     <div class="${cardCls}">
@@ -322,8 +351,14 @@ function render() {
         ${dueChip}
       </div>
       <div class="todo-actions">
-        <button class="delete-btn" data-delete="${t.id}" data-recurring="${t.isRecurring}" aria-label="Delete todo">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button class="edit-btn" data-edit="${t.id}" aria-label="Edit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button class="delete-btn" data-delete="${t.id}" data-recurring="${t.isRecurring}" aria-label="Delete">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
             <path d="M10 11v6M14 11v6"/>
@@ -520,16 +555,34 @@ const dueDateInput = document.getElementById('dueDateInput');
 const recurInput   = document.getElementById('recurringInput');
 const submitBtn    = document.getElementById('submitBtn');
 const titleError   = document.getElementById('titleError');
+const modalTitle   = document.querySelector('.modal-title');
 
-function openModal()  {
+let editingId = null;
+
+function openModal(existing = null)  {
+  editingId = existing?.id ?? null;
   todoForm.reset();
   titleInput.classList.remove('invalid');
   titleError.classList.remove('visible');
-  submitBtn.disabled = true;
+
+  if (existing) {
+    titleInput.value   = existing.title;
+    descInput.value    = existing.description || '';
+    dueDateInput.value = existing.dueDate || '';
+    recurInput.checked = existing.isRecurring;
+    modalTitle.textContent  = 'Edit Item';
+    submitBtn.textContent   = 'Save Changes';
+    submitBtn.disabled      = false;
+  } else {
+    modalTitle.textContent = 'New Item';
+    submitBtn.textContent  = 'Add';
+    submitBtn.disabled     = true;
+  }
+
   modalOverlay.classList.add('open');
   setTimeout(() => titleInput.focus(), 60);
 }
-function closeModal() { modalOverlay.classList.remove('open'); }
+function closeModal() { modalOverlay.classList.remove('open'); editingId = null; }
 
 titleInput.addEventListener('input', () => {
   const ok = titleInput.value.trim().length > 0;
@@ -541,7 +594,12 @@ todoForm.addEventListener('submit', e => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) { titleInput.classList.add('invalid'); titleError.classList.add('visible'); titleInput.focus(); return; }
-  addTodo(title, descInput.value.trim(), dueDateInput.value || null, recurInput.checked);
+  const dueDate = dueDateInput.value || null;
+  if (editingId) {
+    updateTodo(editingId, title, descInput.value.trim(), dueDate, recurInput.checked);
+  } else {
+    addTodo(title, descInput.value.trim(), dueDate, recurInput.checked);
+  }
   closeModal();
 });
 
@@ -563,8 +621,14 @@ document.getElementById('todoList').addEventListener('change', e => {
 });
 
 document.getElementById('todoList').addEventListener('click', e => {
-  const btn = e.target.closest('[data-delete]');
-  if (btn) showDeleteConfirm(btn.dataset.delete, btn.dataset.recurring === 'true');
+  const editBtn = e.target.closest('[data-edit]');
+  if (editBtn) {
+    const item = todos.find(t => t.id === editBtn.dataset.edit);
+    if (item) openModal(item);
+    return;
+  }
+  const delBtn = e.target.closest('[data-delete]');
+  if (delBtn) showDeleteConfirm(delBtn.dataset.delete, delBtn.dataset.recurring === 'true');
 });
 
 // ═══════════════════════════════════════════════════════════
